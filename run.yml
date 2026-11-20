@@ -1,0 +1,26 @@
+name: Run on public dataset
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download public dataset (phiX174, NCBI NC_001422.1)
+        run: |
+          mkdir -p data output
+          curl -sSf -o data/phix174.fasta "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001422.1&rettype=fasta"
+      - name: Run script
+        run: python3 fasta_stats.py data/phix174.fasta -o output/phix174_report.tsv
+      - name: Save results to the repo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add data output
+          git diff --staged --quiet || (git commit -m "Add phiX174 data and report" && git push)
